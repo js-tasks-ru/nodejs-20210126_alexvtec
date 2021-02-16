@@ -6,27 +6,34 @@ const newLineCharCode = os.EOL.charCodeAt(0);
 class LineSplitStream extends stream.Transform {
   constructor(options) {
     super(options);
+    this.symbols = [];
+  }
+
+  sendSymbols() {
+    const buf = Buffer.from(this.symbols);
+    this.push(buf);
+    this.symbols = [];
   }
 
   _transform(chunk, encoding, callback) {
-    let index = 0;
+    for (const key of chunk.keys()) {
+      const symbolCode = chunk[key];
 
-    for (const symbols of chunk.entries()) {
-      const [idx, sym] = symbols;
-      if (sym === newLineCharCode) {
-        this.push(chunk.slice(index, idx));
-        index += 1;
+      if (symbolCode === newLineCharCode) {
+        this.sendSymbols();
+        continue;
       }
 
-      if (idx === chunk.length - 1) {
-        this.push(chunk.slice(idx));
-      }
+      this.symbols.push(symbolCode);
     }
 
     callback(null);
   }
 
   _flush(callback) {
+    if (this.symbols.length !== 0) {
+      this.sendSymbols();
+    }
     callback(null);
   }
 }
