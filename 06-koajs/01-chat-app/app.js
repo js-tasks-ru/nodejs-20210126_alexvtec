@@ -28,14 +28,8 @@ function emit(event, msg) {
 router.get(
     '/subscribe',
     async (ctx, next) => {
-      return new Promise((res) => {
-        subscribe(
-            'message',
-            function(msg) {
-              ctx.body = msg;
-              return next(res());
-            });
-      });
+      ctx.body = await new Promise((res) => subscribe('message', res));
+      next();
     });
 
 router.post('/publish', async (ctx, next) => {
@@ -44,7 +38,7 @@ router.post('/publish', async (ctx, next) => {
     emit('message', message);
   }
   ctx.body = message;
-  return next();
+  next();
 });
 
 app.use(router.routes());
